@@ -1,4 +1,4 @@
-# Build artifacts
+# Build artifacts  
 build/
 dist/
 
@@ -7,12 +7,12 @@ src/
 tsconfig.json
 .gitignore
 
-# Node modules we don't need
+# Node modules we don't need (keep @modelcontextprotocol/sdk completely)
 node_modules/@types/
 node_modules/typescript/
 
-# Documentation and tests
-*.md
+# Documentation and tests (excluding MCP SDK)
+README.md
 CHANGELOG*
 HISTORY*
 test/
@@ -21,6 +21,8 @@ tests/
 *.test.ts
 *.spec.js
 *.spec.ts
+# But keep all MCP SDK files
+!node_modules/@modelcontextprotocol/**
 
 # CI/CD files
 .travis.yml
@@ -28,8 +30,6 @@ tests/
 .circleci/
 
 # Other unnecessary files
-*.map
-*.d.ts.map
 example/
 examples/
 benchmark/
