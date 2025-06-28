@@ -1,0 +1,59 @@
+{
+  "dxt_version": "0.1",
+  "name": "street-view-node-mcp",
+  "version": "1.0.0",
+  "display_name": "Street View Explorer",
+  "description": "A Model Context Protocol server for Google Street View API that enables AI models to fetch and display street view imagery and create virtual tours.",
+  "long_description": "This extension provides comprehensive Google Street View capabilities through MCP tools. Fetch street view images by address, coordinates, or panorama ID, get metadata about locations, create HTML virtual tours, and manage saved images. Perfect for exploration, documentation, and virtual travel assistance.",
+  "author": {
+    "name": "Vlad Gheorghe",
+    "url": "https://github.com/vlad-ds"
+  },
+  "license": "MIT",
+  "keywords": ["street-view", "google-maps", "virtual-tours", "imagery", "exploration"],
+  "icon": "icon.png",
+  "tools": [
+    {
+      "name": "get_street_view",
+      "description": "Fetch a Street View image based on location, coordinates, or panorama ID and save to file"
+    },
+    {
+      "name": "get_metadata",
+      "description": "Fetch metadata about a Street View panorama including status, copyright, date, and coordinates"
+    },
+    {
+      "name": "create_html_page",
+      "description": "Create an HTML page that displays multiple Street View images as a virtual tour"
+    },
+    {
+      "name": "list_saved_images",
+      "description": "List all saved Street View images in the output directory"
+    }
+  ],
+  "user_config": {
+    "google_api_key": {
+      "type": "string",
+      "title": "Google Maps API Key",
+      "description": "Your Google Maps API key with Street View Static API enabled. Get this from https://console.cloud.google.com/",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "GOOGLE_API_KEY": "${user_config.google_api_key}"
+      }
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=16.0.0"
+    }
+  }
+}

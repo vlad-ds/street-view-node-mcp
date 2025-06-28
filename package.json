@@ -1,0 +1,52 @@
+{
+  "name": "street-view-node-mcp",
+  "version": "1.0.0",
+  "description": "A Model Context Protocol (MCP) server for Google Street View API that enables AI models to fetch and display street view imagery and create virtual tours, packaged as a Desktop Extension (DXT).",
+  "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "street-view-node-mcp": "server/index.js"
+  },
+  "scripts": {
+    "build": "tsc && mkdir -p server && cp build/index.js server/",
+    "build:dxt": "npm run build && npm run bundle",
+    "bundle": "npm pack --pack-destination=dist/",
+    "start": "node server/index.js",
+    "dev": "tsc && node build/index.js",
+    "clean": "rm -rf build server dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vlad-ds/street-view-node-mcp.git"
+  },
+  "keywords": ["street-view", "google-maps", "mcp", "dxt", "desktop-extension", "virtual-tours", "imagery"],
+  "author": {
+    "name": "Vlad Gheorghe",
+    "url": "https://www.linkedin.com/in/vlad-ds/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vlad-ds/street-view-node-mcp/issues"
+  },
+  "homepage": "https://github.com/vlad-ds/street-view-node-mcp#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "axios": "^1.7.9",
+    "zod": "^3.25.67",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.7",
+    "typescript": "^5.8.3"
+  },
+  "files": [
+    "server/",
+    "manifest.json",
+    "icon.png",
+    "README.md"
+  ]
+}
