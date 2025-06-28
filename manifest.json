@@ -34,7 +34,7 @@
     "google_api_key": {
       "type": "string",
       "title": "Google Maps API Key",
-      "description": "Your Google Maps API key with Street View Static API enabled. Get this from https://console.cloud.google.com/",
+      "description": "Your Google Maps API key with Street View Static API enabled. See detailed setup instructions at: https://github.com/vlad-ds/street-view-node-mcp#google-maps-api-key-setup",
       "sensitive": true,
       "required": true
     }

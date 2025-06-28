@@ -35,12 +35,7 @@ A Model Context Protocol (MCP) server for Google Street View API that enables AI
    npm run build
    ```
 
-4. **Get a Google Maps API Key**:
-   - Visit the [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Enable the "Street View Static API" in the API Library
-   - Create an API key from the Credentials page
-   - Optionally restrict the API key to Street View Static API for security
+4. **Get a Google Maps API Key** (see [detailed instructions](#google-maps-api-key-setup) below)
 
 ## Usage
 
@@ -182,6 +177,83 @@ This creates a packaged version ready for distribution as a Desktop Extension.
 - Never commit API keys to version control
 - The manifest.json marks the API key field as sensitive
 - Consider restricting your Google Maps API key to specific APIs and domains/IPs for additional security
+
+## Google Maps API Key Setup
+
+The Street View Explorer requires a Google Maps API key with Street View Static API enabled. Follow these detailed steps:
+
+### Step 1: Access Google Cloud Console
+
+1. Visit the [Google Cloud Console](https://console.cloud.google.com/)
+2. Sign in with your Google account
+
+### Step 2: Create or Select a Project
+
+1. **Create a new project**:
+   - Click the project dropdown at the top of the page
+   - Click "New Project"
+   - Enter a project name (e.g., "Street View MCP")
+   - Click "Create"
+
+2. **Or select an existing project**:
+   - Click the project dropdown
+   - Select your desired project from the list
+
+### Step 3: Enable the Street View Static API
+
+1. In the Google Cloud Console, navigate to "APIs & Services" > "Library"
+2. Search for "Street View Static API"
+3. Click on "Street View Static API" from the results
+4. Click the "Enable" button
+5. Wait for the API to be enabled (this may take a few moments)
+
+### Step 4: Create an API Key
+
+1. Navigate to "APIs & Services" > "Credentials"
+2. Click "Create Credentials" > "API key"
+3. Your new API key will be displayed - **copy it immediately**
+4. Click "Close" in the dialog
+
+### Step 5: Restrict the API Key (Recommended for Security)
+
+1. In the Credentials page, find your newly created API key
+2. Click the pencil icon (Edit) next to your API key
+3. Under "API restrictions":
+   - Select "Restrict key"
+   - Check "Street View Static API"
+   - Uncheck any other APIs you don't need
+4. Under "Application restrictions" (optional but recommended):
+   - For testing: Select "None"
+   - For production: Choose "HTTP referrers" or "IP addresses" as appropriate
+5. Click "Save"
+
+### Step 6: Configure in DXT
+
+When installing the Street View Explorer as a Desktop Extension:
+
+1. The extension will prompt you for your Google Maps API Key
+2. Paste the API key you copied in Step 4
+3. The key is stored securely and passed to the MCP server as an environment variable
+
+### API Usage and Billing
+
+- **Free Tier**: Google provides $200 in free credits monthly
+- **Street View Static API**: $7.00 per 1,000 requests after free tier
+- **Monitor usage**: Check your usage in Google Cloud Console > "APIs & Services" > "Dashboard"
+
+### Troubleshooting
+
+**API Key Issues:**
+- Ensure the Street View Static API is enabled for your project
+- Check that your API key is correctly restricted to Street View Static API
+- Verify there are no quota exceeded errors in the Google Cloud Console
+
+**Common Error Messages:**
+- `"REQUEST_DENIED"`: API key invalid or API not enabled
+- `"OVER_QUERY_LIMIT"`: You've exceeded your quota
+- `"INVALID_REQUEST"`: Check your request parameters
+
+For more detailed information, visit the [Google Maps Platform documentation](https://developers.google.com/maps/documentation/streetview/overview).
 
 ## License
 
