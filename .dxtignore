@@ -1,0 +1,36 @@
+# Build artifacts
+build/
+dist/
+
+# Development files
+src/
+tsconfig.json
+.gitignore
+
+# Node modules we don't need
+node_modules/@types/
+node_modules/typescript/
+
+# Documentation and tests
+*.md
+CHANGELOG*
+HISTORY*
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# CI/CD files
+.travis.yml
+.github/
+.circleci/
+
+# Other unnecessary files
+*.map
+*.d.ts.map
+example/
+examples/
+benchmark/
+benchmarks/
