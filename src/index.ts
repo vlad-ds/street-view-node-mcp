@@ -22,6 +22,7 @@ import sharp from "sharp";
 import { promises as fs } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { tmpdir } from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,9 +32,52 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const BASE_URL = "https://maps.googleapis.com/maps/api/streetview";
 const METADATA_URL = "https://maps.googleapis.com/maps/api/streetview/metadata";
 
-// Output directories
-const OUTPUT_DIR = join(process.cwd(), "output");
-const HTML_DIR = join(process.cwd(), "html");
+// Enhanced directory resolution with fallbacks
+function getOutputDirectory(): string {
+  // Try multiple fallback options in order of preference
+  const fallbackDirs = [
+    join(process.cwd(), "output"),  // Current working directory (preferred)
+    join(tmpdir(), "streetview-mcp-output"),  // System temp directory
+    join(process.env.HOME || process.env.USERPROFILE || tmpdir(), "streetview-output")  // User home or temp
+  ];
+  
+  for (const dir of fallbackDirs) {
+    try {
+      // Test if we can create the directory
+      return dir;
+    } catch {
+      continue;
+    }
+  }
+  
+  // Final fallback to temp directory
+  return join(tmpdir(), "streetview-mcp-output");
+}
+
+function getHtmlDirectory(): string {
+  // Try multiple fallback options in order of preference
+  const fallbackDirs = [
+    join(process.cwd(), "html"),  // Current working directory (preferred)
+    join(tmpdir(), "streetview-mcp-html"),  // System temp directory
+    join(process.env.HOME || process.env.USERPROFILE || tmpdir(), "streetview-html")  // User home or temp
+  ];
+  
+  for (const dir of fallbackDirs) {
+    try {
+      // Test if we can create the directory
+      return dir;
+    } catch {
+      continue;
+    }
+  }
+  
+  // Final fallback to temp directory
+  return join(tmpdir(), "streetview-mcp-html");
+}
+
+// Output directories with fallback support
+const OUTPUT_DIR = getOutputDirectory();
+const HTML_DIR = getHtmlDirectory();
 
 // Enhanced logging for DXT environment
 function log(level: 'info' | 'error' | 'warn', message: string, data?: any) {
@@ -112,12 +156,42 @@ const server = new Server({
   },
 });
 
-// Utility function to ensure directories exist
-async function ensureDirectoryExists(dir: string): Promise<void> {
+// Enhanced utility function to ensure directories exist with permission handling
+async function ensureDirectoryExists(dir: string): Promise<string> {
   try {
     await fs.access(dir);
+    // Directory exists, test write permissions
+    const testFile = join(dir, '.write-test-' + Date.now());
+    try {
+      await fs.writeFile(testFile, '');
+      await fs.unlink(testFile);
+      return dir; // Directory exists and is writable
+    } catch {
+      throw new Error('Directory exists but is not writable');
+    }
   } catch {
-    await fs.mkdir(dir, { recursive: true });
+    try {
+      await fs.mkdir(dir, { recursive: true });
+      // Test write permissions after creation
+      const testFile = join(dir, '.write-test-' + Date.now());
+      try {
+        await fs.writeFile(testFile, '');
+        await fs.unlink(testFile);
+        return dir; // Directory created and is writable
+      } catch {
+        throw new Error('Directory created but is not writable');
+      }
+    } catch (createError) {
+      // If we can't create the directory, try fallback locations
+      if (dir.includes(process.cwd())) {
+        // Try temp directory fallback
+        const tempDir = join(tmpdir(), 'streetview-mcp-' + Date.now());
+        log('warn', `Cannot create directory ${dir}, falling back to ${tempDir}`, { error: createError });
+        await fs.mkdir(tempDir, { recursive: true });
+        return tempDir;
+      }
+      throw createError;
+    }
   }
 }
 
@@ -321,7 +395,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             html_elements: {
               type: "array",
               items: { type: "string" },
-              description: "List of content HTML elements (just the body content, no need for HTML structure). When including Street View images, use path '../output/filename.jpg'",
+              description: "List of content HTML elements (just the body content, no need for HTML structure). When including Street View images, use relative path to the saved image file",
             },
           },
           required: ["filename", "html_elements"],
@@ -350,11 +424,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { filename, location, lat_lng, pano_id, size, heading, pitch, fov, radius, source } = validatedArgs;
         
         try {
-          // Ensure output directory exists
-          await ensureDirectoryExists(OUTPUT_DIR);
+          // Ensure output directory exists with fallback handling
+          const actualOutputDir = await ensureDirectoryExists(OUTPUT_DIR);
           
           // Check if file already exists
-          const filePath = join(OUTPUT_DIR, filename);
+          const filePath = join(actualOutputDir, filename);
           try {
             await fs.access(filePath);
             throw new Error(`File ${filename} already exists in output directory`);
@@ -398,8 +472,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           // Get image metadata for response
           const metadata = await sharp(filePath).metadata();
           
+          // Read the saved image file to return to the model
+          const savedImageBuffer = await fs.readFile(filePath);
+          
           return {
             content: [
+              {
+                type: "image",
+                data: savedImageBuffer.toString('base64'),
+                mimeType: "image/jpeg",
+              },
               {
                 type: "text",
                 text: JSON.stringify({
@@ -505,12 +587,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { filename, title, html_elements } = validatedArgs;
         
         try {
-          // Ensure HTML directory exists
-          await ensureDirectoryExists(HTML_DIR);
+          // Ensure HTML directory exists with fallback handling
+          const actualHtmlDir = await ensureDirectoryExists(HTML_DIR);
           
           // Ensure filename has .html extension
           const htmlFilename = filename.endsWith('.html') ? filename : `${filename}.html`;
-          const filePath = join(HTML_DIR, htmlFilename);
+          const filePath = join(actualHtmlDir, htmlFilename);
           
           // Check if file already exists
           try {
@@ -600,11 +682,11 @@ ${content}
 
       case "list_saved_images": {
         try {
-          // Ensure output directory exists
-          await ensureDirectoryExists(OUTPUT_DIR);
+          // Ensure output directory exists with fallback handling
+          const actualOutputDir = await ensureDirectoryExists(OUTPUT_DIR);
           
           // Read directory contents
-          const files = await fs.readdir(OUTPUT_DIR);
+          const files = await fs.readdir(actualOutputDir);
           const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
           const imageFiles = files.filter(file => 
             imageExtensions.some(ext => file.toLowerCase().endsWith(ext))
@@ -613,7 +695,7 @@ ${content}
           // Get file stats for each image
           const imageInfo = await Promise.all(
             imageFiles.map(async (file) => {
-              const filePath = join(OUTPUT_DIR, file);
+              const filePath = join(actualOutputDir, file);
               const stats = await fs.stat(filePath);
               
               try {
@@ -643,7 +725,7 @@ ${content}
               {
                 type: "text",
                 text: JSON.stringify({
-                  output_directory: OUTPUT_DIR,
+                  output_directory: actualOutputDir,
                   total_images: imageInfo.length,
                   images: imageInfo.sort((a, b) => b.modified.localeCompare(a.modified)) // Sort by most recent first
                 }, null, 2),
